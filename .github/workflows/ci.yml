@@ -1,0 +1,23 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Tests
+        run: python -m pytest -q
+      - name: Regression gate (must flag the hallucination run)
+        run: |
+          set +e
+          python -m rve.elt_cli
+          code=$?
+          if [ "$code" -ne 3 ]; then echo "expected gate exit 3 (regression detected), got $code"; exit 1; fi
+          echo "gate correctly flagged the hallucination run"
